@@ -28,17 +28,18 @@ export async function POST() {
   });
 
   if (userError) {
-    if (userError.message.toLowerCase().includes("already") || userError.message.includes("Database error")) {
-      // User may exist already — look them up
-      const { data: list } = await supabase.auth.admin.listUsers();
-      const existing = list?.users?.find((u) => u.email === "test@victory.app");
-      userId = existing?.id;
-      if (!userId) {
-        return NextResponse.json({ error: userError.message }, { status: 500 });
-      }
-    } else {
+    // User may exist already — look them up and reset password
+    const { data: list } = await supabase.auth.admin.listUsers();
+    const existing = list?.users?.find((u) => u.email === "test@victory.app");
+    userId = existing?.id;
+    if (!userId) {
       return NextResponse.json({ error: userError.message }, { status: 500 });
     }
+    // Reset password and confirm email on the existing user
+    await supabase.auth.admin.updateUserById(userId, {
+      password: "Test1234!",
+      email_confirm: true,
+    });
   } else {
     userId = userData?.user?.id;
   }
