@@ -16,31 +16,44 @@ export type ClientWithLastService = Client & {
 export async function getAllClients(): Promise<ClientWithLastService[]> {
   const supabase = await createClient();
   if (!supabase) {
-    return demoClients.map((c) => ({ ...c, last_service_type: null, last_service_date: null }));
+    return demoClients.map((c) => {
+      const entries = demoServiceEntries
+        .filter((e) => e.client_id === c.id)
+        .sort((a, b) => new Date(b.service_date).getTime() - new Date(a.service_date).getTime());
+      return {
+        ...c,
+        last_service_type: entries[0]?.service_types?.name ?? null,
+        last_service_date: entries[0]?.service_date ?? null,
+      };
+    });
   }
 
-  const { data, error } = await supabase
-    .from("clients")
-    .select("*, service_entries(service_date, service_types(name))")
-    .order("last_name");
+  const [clientsRes, entriesRes] = await Promise.all([
+    supabase.from("clients").select("*").order("last_name"),
+    supabase
+      .from("service_entries")
+      .select("client_id, service_date, service_types(name)")
+      .order("service_date", { ascending: false }),
+  ]);
 
-  if (error || !data) {
-    return demoClients.map((c) => ({ ...c, last_service_type: null, last_service_date: null }));
+  const clients = (clientsRes.data ?? []) as Client[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const entries = (entriesRes.data ?? []) as any[];
+
+  // First entry per client_id is the latest (already ordered desc)
+  const latestMap = new Map<string, { type: string | null; date: string }>();
+  for (const e of entries) {
+    if (!latestMap.has(e.client_id)) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      latestMap.set(e.client_id, { type: (e as any)?.service_types?.name ?? null, date: e.service_date });
+    }
   }
 
-  return data.map((c) => {
-    const entries = (c.service_entries ?? []) as {
-      service_date: string;
-      service_types?: { name: string } | null;
-    }[];
-    const latest = entries.sort(
-      (a, b) => new Date(b.service_date).getTime() - new Date(a.service_date).getTime()
-    )[0];
-    return {
-      ...(c as Client),
-      last_service_type: latest?.service_types?.name ?? null,
-      last_service_date: latest?.service_date ?? null,
-    };
+  console.log("ENTRIES COUNT:", entries.length, "FIRST:", entries[0]);
+
+  return clients.map((c) => {
+    const latest = latestMap.get(c.id);
+    return { ...c, last_service_type: latest?.type ?? null, last_service_date: latest?.date ?? null };
   });
 }
 
