@@ -92,8 +92,8 @@ export function VoiceRecorder({
   > = {
     idle: null,
     recording: "Recording… speak now",
-    transcribing: "Transcribing with Whisper…",
-    structuring: "AI is structuring your notes…",
+    transcribing: "Transcribing audio…",
+    structuring: "Structuring your notes…",
     done: "Notes structured successfully.",
   };
 

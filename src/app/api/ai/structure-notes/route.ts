@@ -13,7 +13,7 @@ const DEMO: StructuredNote = {
   mood_risk: "Medium risk — situational stress related to housing uncertainty; no safety concerns voiced.",
   follow_up_date: null,
   key_observations:
-    "Client asked clarifying questions about document requirements and responded positively to structured next steps.",
+    "Client asked clarifying questions about paperwork and responded positively to structured next steps.",
 };
 
 export async function POST(req: Request) {

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { logAudit } from "@/lib/audit/log";
 
 export async function POST(req: Request) {
   try {
@@ -41,6 +42,15 @@ export async function POST(req: Request) {
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
+
+    await logAudit(supabase, {
+      userId: user?.id ?? null,
+      action: "create",
+      tableName: "clients",
+      recordId: data.id,
+      payload: { first_name, last_name },
+    });
+
     return NextResponse.json({ id: data.id });
   } catch {
     return NextResponse.json({ error: "Failed to create client" }, { status: 500 });

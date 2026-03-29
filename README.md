@@ -1,31 +1,57 @@
-# 2026_spring_wics_asu Hackathon Project
+# Victory — Nonprofit client case management
 
-## Quick Links
+## Quick links
 
-- [Hackathon Details](https://www.ohack.dev/hack/2026_spring_wics_asu)
-- [DevPost Submission](https://wics-ohack-sp26-hackathon.devpost.com/)
-- [Team Slack Channel](https://opportunity-hack.slack.com/app_redirect?channel=team-02-victory)
+- [Source repository](https://github.com/2026-ASU-WiCS-Opportunity-Hack/02-victory)
+- [Live app](https://02-victory.vercel.app)
+- [Team Slack](https://opportunity-hack.slack.com/app_redirect?channel=team-02-victory)
 
-## Team "Victory"
+## Team
 
 - Tanmai Potla
 - Suma Mallu
 - Mrudula Eluri
 - Sanjana Soma
 
-## Project Overview
+## Overview
 
-**Victory** is a client case management web app for nonprofits: client profiles, searchable directory, voice-assisted visit notes (Groq Whisper + Llama), and funder-style report generation. Built for the hackathon stack (Next.js, Supabase, Groq, Vercel).
+**Victory** is a web app for nonprofits: client profiles, searchable directory, voice capture with structured visit notes, funder-style reports, dashboards, calendar, CSV import/export, configurable fields, and an admin audit trail. Stack: Next.js, Supabase, Groq (optional for live transcription and drafting), Vercel.
 
-## Tech Stack
+## Problem
+
+Teams delivering human services need to **register clients**, **log visits**, **schedule follow-ups**, and **report outcomes** to funders—without enterprise pricing. Victory keeps structured data, role-based access, migration paths, and reporting in one place.
+
+## What you can try
+
+| Area | In this repo |
+|------|----------------|
+| Auth & roles | Email signup, Google OAuth, middleware-protected routes; `profiles.role` (staff / admin) |
+| Clients | Intake with demographics and custom fields; search by name, phone, email, ID |
+| Services | Manual entry plus voice capture → structured summary, mood/risk, action items; history on profile |
+| Operations | Dashboard KPIs (print-friendly), appointments calendar, reminders |
+| Data | CSV import/export (admin); dev seed for local Supabase (`POST /api/dev/seed` in development only) |
+| Governance | Custom field definitions, audit log; apply SQL migrations in Supabase (including RLS in `supabase/migrations/`) |
+
+Routes under `/api/ai/` handle transcription, note structuring, funder narratives, and client handoff summaries when `GROQ_API_KEY` is set; otherwise the app uses demo data and mock responses.
+
+## Local demo seed
+
+With `.env.local` configured and migrations applied:
+
+```bash
+curl -X POST http://localhost:3000/api/dev/seed
+```
+
+Returns counts and test credentials (`test@victory.app` / `Test1234!`). Disabled outside `NODE_ENV=development`.
+
+**Google sign-in:** In Supabase → Authentication → Providers → Google, enable and add OAuth client ID/secret; redirect URLs: `https://<your-domain>/auth/callback` and `http://localhost:3000/auth/callback`.
+
+## Tech stack
 
 - **Frontend:** Next.js (App Router), React, Tailwind CSS, shadcn/ui, Recharts
-- **Backend:** Next.js Route Handlers (`/api/ai/*`, `/api/export/csv`)
-- **Database / Auth:** Supabase (PostgreSQL + Auth + RLS) — wire via env vars
-- **AI:** Groq (Whisper STT + Llama 3.3 70B); optional Google Gemini fallback per architecture
-
-## Live demo
-(https://02-victory.vercel.app)
+- **Backend:** Next.js Route Handlers (`/api/*` including transcription, reports, export)
+- **Database / auth:** Supabase (PostgreSQL + Auth + RLS)
+- **Transcription & drafting:** Groq (Whisper-class STT + Llama 3.3); optional Gemini fallback (see planning notes in repo)
 
 ## Run locally
 
@@ -40,74 +66,22 @@ cp .env.local.example .env.local
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). Without API keys, the app uses demo data and mock AI responses.
+Open [http://localhost:3000](http://localhost:3000). Without API keys, the app uses demo data and mock responses.
 
 ```bash
-npm run build   # production build
-npm start       # run production server locally
+npm run build
+npm start
 ```
 
 ## Environment variables
 
-Copy `.env.local.example` to `.env.local` and fill in:
+Copy `.env.local.example` to `.env.local` and set:
 
-- `GROQ_API_KEY` — Whisper + Llama (optional for demo mode)
+- `GROQ_API_KEY` — optional; enables live transcription and drafting
 - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` — Supabase client
-- `SUPABASE_SERVICE_ROLE_KEY` — server-only if needed
+- `SUPABASE_SERVICE_ROLE_KEY` — server-only (seed, admin operations)
 - `NEXT_PUBLIC_APP_URL` — e.g. `http://localhost:3000` or your deploy URL
 
-## Checklist for the final submission
+## License
 
-### 0/Judging Criteria
-
-- [ ] Review the [judging criteria](https://www.ohack.dev/about/judges#judging-criteria) to understand how your project will be evaluated
-
-### 1/DevPost
-
-- [ ] Submit a [DevPost project to this DevPost page for our hackathon](https://wics-ohack-sp26-hackathon.devpost.com/) - see our [YouTube Walkthrough](https://youtu.be/rsAAd7LXMDE) or a more general one from DevPost [here](https://www.youtube.com/watch?v=vCa7QFFthfU)
-- [ ] Your DevPost final submission demo video should be 4 minutes or less
-- [ ] Link your team to your DevPost project on ohack.dev in [your team dashboard](https://www.ohack.dev/hack/2026_spring_wics_asu/manageteam)
-- [ ] Link your GitHub repo to your DevPost project on the DevPost submission form under "Try it out" links
-
-### 2/GitHub
-
-- [ ] Add everyone on your team to your GitHub repo [YouTube Walkthrough](https://youtu.be/kHs0jOewVKI)
-- [ ] Make sure your repo is public
-- [ ] Make sure your repo has a MIT License
-- [ ] Make sure your repo has a detailed README.md (see below for details)
-
-## What should your final README look like?
-
-Your readme should be a one-stop-shop for the judges to understand your project. It should include:
-
-- Team name
-- Team members
-- Slack channel
-- Problem statement
-- Tech stack
-- Link to your working project on the web so judges can try it out
-- Link to your DevPost project
-- Link to your final demo video
-- Instructions on how to run your project
-- Any other relevant links (e.g. Figma, GitHub repos for any open source libraries you used, etc.)
-
-You'll use this repo as your resume in the future, so make it shine.
-
-## Examples
-
-Examples of stellar readmes:
-
-- [2019 Team 3](https://github.com/2019-Arizona-Opportunity-Hack/Team-3)
-- [2019 Team 6](https://github.com/2019-Arizona-Opportunity-Hack/Team-6)
-- [2020 Team 2](https://github.com/2020-opportunity-hack/Team-02)
-- [2020 Team 4](https://github.com/2020-opportunity-hack/Team-04)
-- [2020 Team 8](https://github.com/2020-opportunity-hack/Team-08)
-- [2020 Team 12](https://github.com/2020-opportunity-hack/Team-12)
-
-Examples of winning DevPost submissions:
-
-- [1st place 2024](https://devpost.com/software/nature-s-edge-wildlife-and-reptile-rescue)
-- [2nd place 2024](https://devpost.com/software/team13-kidcoda-steam)
-- [1st place 2023](https://devpost.com/software/preservation-partners-search-engine)
-- [1st place 2019](https://devpost.com/software/zuri-s-dashboard)
-- [1st place 2018](https://devpost.com/software/matthews-crossing-data-manager-oj4ica)
+MIT — see [LICENSE](./LICENSE).

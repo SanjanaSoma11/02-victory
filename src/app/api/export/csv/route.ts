@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getAdminContext } from "@/lib/auth/admin";
 import { demoClients, demoServiceEntries } from "@/lib/data/demo";
 
 function csvCell(value: string) {
@@ -17,6 +18,11 @@ type Row = {
 };
 
 export async function GET() {
+  const { isAdmin } = await getAdminContext();
+  if (!isAdmin) {
+    return NextResponse.json({ error: "Only administrators can export client data." }, { status: 403 });
+  }
+
   const supabase = await createClient();
   let rows: Row[];
 

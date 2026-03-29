@@ -21,6 +21,14 @@ import { toast } from "sonner";
 import { buttonVariants } from "@/lib/button-variants";
 import { cn } from "@/lib/utils";
 
+type FieldDef = {
+  id: string;
+  key: string;
+  label: string;
+  field_type: "text" | "number" | "select";
+  options: string[] | null;
+};
+
 interface ServiceFormProps {
   clientId: string;
   clientLabel: string;
@@ -30,6 +38,8 @@ interface ServiceFormProps {
 export function ServiceForm({ clientId, clientLabel, serviceTypes = [] }: ServiceFormProps) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
+  const [customDefs, setCustomDefs] = useState<FieldDef[]>([]);
+  const [customValues, setCustomValues] = useState<Record<string, string>>({});
   const [serviceType, setServiceType] = useState<string>("");
   const [notes, setNotes] = useState("");
   const [aiSummary, setAiSummary] = useState<string | null>(null);
@@ -40,11 +50,15 @@ export function ServiceForm({ clientId, clientLabel, serviceTypes = [] }: Servic
   const [transcript, setTranscript] = useState<string | null>(null);
 
   useEffect(() => {
-    if (aiSummary) setNotes((prev) => prev || aiSummary);
-  }, [aiSummary]);
+    fetch("/api/custom-fields?applies_to=service")
+      .then((r) => r.json())
+      .then((d: { fields?: FieldDef[] }) => setCustomDefs(d.fields ?? []))
+      .catch(() => setCustomDefs([]));
+  }, []);
 
   const onStructured = (data: StructuredNote) => {
     setAiSummary(data.summary);
+    if (data.summary) setNotes((prev) => prev || data.summary);
     setAiMood(data.mood_risk);
     setActionItems(data.action_items);
     if (data.service_type && !serviceType) {
@@ -53,12 +67,24 @@ export function ServiceForm({ clientId, clientLabel, serviceTypes = [] }: Servic
       );
       setServiceType(match ?? data.service_type);
     }
-    toast.success("AI filled summary and action items — review before saving.");
+    toast.success("Draft summary and action items filled — review before saving.");
   };
 
   async function onSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault();
     setPending(true);
+
+    const custom_fields: Record<string, unknown> = {};
+    for (const def of customDefs) {
+      const raw = customValues[def.key] ?? "";
+      if (raw === "") continue;
+      if (def.field_type === "number") {
+        const n = Number(raw);
+        if (!Number.isNaN(n)) custom_fields[def.key] = n;
+      } else {
+        custom_fields[def.key] = raw;
+      }
+    }
 
     const res = await fetch("/api/services", {
       method: "POST",
@@ -75,6 +101,7 @@ export function ServiceForm({ clientId, clientLabel, serviceTypes = [] }: Servic
         ai_mood_risk: aiMood,
         source: transcript ? "voice" : "manual",
         audio_transcript: transcript,
+        ...(Object.keys(custom_fields).length > 0 ? { custom_fields } : {}),
       }),
     });
 
@@ -115,7 +142,7 @@ export function ServiceForm({ clientId, clientLabel, serviceTypes = [] }: Servic
         <CardHeader>
           <CardTitle className="font-heading text-xl">Service entry</CardTitle>
           <CardDescription>
-            Manual fields merge with AI output from voice capture when you use it.
+            Manual fields merge with drafted output from voice capture when you use it.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -179,9 +206,50 @@ export function ServiceForm({ clientId, clientLabel, serviceTypes = [] }: Servic
               />
             </div>
 
+            {customDefs.length > 0 ? (
+              <div className="space-y-4 rounded-xl border border-border bg-muted/20 p-4">
+                <p className="text-sm font-medium">Additional fields</p>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {customDefs.map((def) => (
+                    <div key={def.id} className="space-y-2 sm:col-span-2">
+                      <Label htmlFor={`scf-${def.key}`}>{def.label}</Label>
+                      {def.field_type === "select" && def.options && def.options.length > 0 ? (
+                        <Select
+                          value={customValues[def.key] ?? ""}
+                          onValueChange={(v) =>
+                            setCustomValues((prev) => ({ ...prev, [def.key]: v ?? "" }))
+                          }
+                        >
+                          <SelectTrigger id={`scf-${def.key}`} className="w-full">
+                            <SelectValue placeholder="Select" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {def.options.map((opt) => (
+                              <SelectItem key={opt} value={opt}>
+                                {opt}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <Input
+                          id={`scf-${def.key}`}
+                          type={def.field_type === "number" ? "number" : "text"}
+                          value={customValues[def.key] ?? ""}
+                          onChange={(e) =>
+                            setCustomValues((prev) => ({ ...prev, [def.key]: e.target.value }))
+                          }
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
             {(aiSummary || aiMood || actionItems.length > 0) && (
               <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-3">
-                <p className="text-sm font-medium">AI-assisted fields</p>
+                <p className="text-sm font-medium">Draft fields</p>
                 {aiSummary ? (
                   <div>
                     <p className="text-xs uppercase text-muted-foreground">Summary</p>

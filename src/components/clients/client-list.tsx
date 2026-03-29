@@ -28,7 +28,8 @@ export function ClientList({ clients }: ClientListProps) {
     const s = q.trim().toLowerCase();
     if (!s) return clients;
     return clients.filter((c) => {
-      const blob = `${c.first_name} ${c.last_name} ${c.email ?? ""} ${c.phone ?? ""}`.toLowerCase();
+      const blob =
+        `${c.first_name} ${c.last_name} ${c.email ?? ""} ${c.phone ?? ""} ${c.id}`.toLowerCase();
       return blob.includes(s);
     });
   }, [clients, q]);
@@ -60,6 +61,7 @@ export function ClientList({ clients }: ClientListProps) {
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
+              <TableHead className="hidden sm:table-cell font-mono text-xs">Client ID</TableHead>
               <TableHead className="hidden md:table-cell">Contact</TableHead>
               <TableHead className="hidden lg:table-cell">Last service</TableHead>
               <TableHead className="hidden lg:table-cell">Address</TableHead>
@@ -78,6 +80,9 @@ export function ClientList({ clients }: ClientListProps) {
                       {c.phone ?? "—"}
                     </span>
                   </div>
+                </TableCell>
+                <TableCell className="hidden max-w-[140px] truncate font-mono text-xs text-muted-foreground sm:table-cell">
+                  {c.id}
                 </TableCell>
                 <TableCell className="hidden md:table-cell">
                   <div className="flex flex-col text-sm">

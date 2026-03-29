@@ -1,6 +1,12 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
+import { demoClients, demoServiceEntries } from "@/lib/data/demo";
+import type { ServiceEntry } from "@/types";
 
+/**
+ * Development seed: 10+ clients and 30+ service entries for local demos.
+ * POST only in development. Requires SUPABASE_SERVICE_ROLE_KEY.
+ */
 export async function POST() {
   if (process.env.NODE_ENV !== "development") {
     return NextResponse.json({ error: "Only available in development" }, { status: 403 });
@@ -17,7 +23,6 @@ export async function POST() {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
-  // 1. Create test user (service role bypasses trigger issues)
   let userId: string | undefined;
 
   const { data: userData, error: userError } = await supabase.auth.admin.createUser({
@@ -28,14 +33,12 @@ export async function POST() {
   });
 
   if (userError) {
-    // User may exist already — look them up and reset password
     const { data: list } = await supabase.auth.admin.listUsers();
     const existing = list?.users?.find((u) => u.email === "test@victory.app");
     userId = existing?.id;
     if (!userId) {
       return NextResponse.json({ error: userError.message }, { status: 500 });
     }
-    // Reset password and confirm email on the existing user
     await supabase.auth.admin.updateUserById(userId, {
       password: "Test1234!",
       email_confirm: true,
@@ -44,15 +47,13 @@ export async function POST() {
     userId = userData?.user?.id;
   }
 
-  // 2. Manually upsert the profile (service role bypasses RLS + trigger)
   if (userId) {
     await supabase.from("profiles").upsert(
       { id: userId, full_name: "Test Staff", email: "test@victory.app", role: "staff" },
-      { onConflict: "id", ignoreDuplicates: true }
+      { onConflict: "id" }
     );
   }
 
-  // 3. Seed service types
   await supabase.from("service_types").upsert(
     [
       { name: "Housing navigation" },
@@ -64,96 +65,100 @@ export async function POST() {
     { onConflict: "name", ignoreDuplicates: true }
   );
 
-  // 4. Seed sample clients
-  const { data: clients } = await supabase
-    .from("clients")
-    .upsert(
-      [
-        {
-          first_name: "Maria",
-          last_name: "Santos",
-          date_of_birth: "1988-04-12",
-          phone: "(555) 201-4490",
-          email: "maria.santos@email.example",
-          address: "142 Oak St, Springfield",
-          demographics: { language: "ES/EN", household: 3 },
-          created_by: userId ?? null,
-        },
-        {
-          first_name: "James",
-          last_name: "Okonkwo",
-          date_of_birth: "1992-11-03",
-          phone: "(555) 310-7721",
-          email: "j.okonkwo@email.example",
-          address: "9 River Rd, Springfield",
-          demographics: { veteran: false, employment: "seeking" },
-          created_by: userId ?? null,
-        },
-        {
-          first_name: "Aisha",
-          last_name: "Rahman",
-          date_of_birth: "1995-07-21",
-          phone: "(555) 884-1022",
-          email: "a.rahman@email.example",
-          address: "Unit 4B, Maple Commons",
-          demographics: { language: "EN/BN", referral: "school" },
-          created_by: userId ?? null,
-        },
-      ],
-      { onConflict: "email", ignoreDuplicates: true }
-    )
-    .select("id, email");
+  const { data: types } = await supabase.from("service_types").select("id, name");
+  const typeMap = Object.fromEntries((types ?? []).map((t) => [t.name, t.id]));
 
-  // 5. Seed service entries
-  if (clients && clients.length > 0) {
-    const { data: types } = await supabase.from("service_types").select("id, name");
-    const typeMap = Object.fromEntries((types ?? []).map((t) => [t.name, t.id]));
-    const maria = clients.find((c) => c.email === "maria.santos@email.example");
-    const james = clients.find((c) => c.email === "j.okonkwo@email.example");
+  const clientRows = demoClients.map((c) => ({
+    id: c.id,
+    first_name: c.first_name,
+    last_name: c.last_name,
+    date_of_birth: c.date_of_birth,
+    phone: c.phone,
+    email: c.email,
+    address: c.address,
+    demographics: c.demographics ?? {},
+    created_by: userId ?? null,
+  }));
 
-    const entries = [];
-    if (maria) {
-      entries.push(
-        {
-          client_id: maria.id,
-          service_type_id: typeMap["Housing navigation"] ?? null,
-          staff_id: userId ?? null,
-          service_date: new Date(Date.now() - 86400000 * 2).toISOString(),
-          duration_minutes: 45,
-          notes: "Follow-up on rental application; landlord requested pay stubs.",
-          source: "manual",
-        },
-        {
-          client_id: maria.id,
-          service_type_id: typeMap["Housing navigation"] ?? null,
-          staff_id: userId ?? null,
-          service_date: new Date(Date.now() - 86400000 * 9).toISOString(),
-          duration_minutes: 30,
-          notes: "Initial intake completed; goals set for stable housing.",
-          source: "voice",
-          audio_transcript: "Client described current living situation and housing goals.",
-        }
-      );
-    }
-    if (james) {
-      entries.push({
-        client_id: james.id,
-        service_type_id: typeMap["Employment coaching"] ?? null,
-        staff_id: userId ?? null,
-        service_date: new Date(Date.now() - 86400000 * 2).toISOString(),
-        duration_minutes: 60,
-        notes: "Resume workshop; scheduled interview prep next week.",
-        source: "manual",
-      });
-    }
+  const { error: clientErr } = await supabase.from("clients").upsert(clientRows, {
+    onConflict: "id",
+  });
 
-    if (entries.length > 0) {
-      await supabase.from("service_entries").insert(entries);
-    }
+  if (clientErr) {
+    return NextResponse.json({ error: clientErr.message }, { status: 500 });
+  }
+
+  const clientIds = demoClients.map((c) => c.id);
+  await supabase.from("service_entries").delete().in("client_id", clientIds);
+
+  function entryToRow(e: ServiceEntry) {
+    const typeName = e.service_types?.name;
+    return {
+      id: e.id,
+      client_id: e.client_id,
+      service_type_id: typeName ? typeMap[typeName] ?? null : null,
+      staff_id: userId ?? null,
+      service_date: e.service_date,
+      duration_minutes: e.duration_minutes,
+      notes: e.notes,
+      ai_summary: e.ai_summary,
+      ai_action_items: e.ai_action_items ?? [],
+      ai_mood_risk: e.ai_mood_risk,
+      source: e.source ?? "manual",
+      audio_transcript: e.audio_transcript,
+    };
+  }
+
+  const rows = demoServiceEntries.map(entryToRow);
+
+  const typeNames = [
+    "Housing navigation",
+    "Benefits enrollment",
+    "Mental health referral",
+    "Food assistance",
+    "Employment coaching",
+  ];
+  const notesTemplate = [
+    "Quarterly check-in; goals reviewed.",
+    "Resource referral and follow-up scheduled.",
+    "Transportation assistance coordinated.",
+    "Benefits paperwork assistance.",
+    "Group workshop attendance.",
+    "Phone intake follow-up.",
+    "Home visit — safety plan reviewed.",
+    "Partner agency warm handoff.",
+  ];
+
+  for (let i = 0; i < 18; i++) {
+    const c = demoClients[i % demoClients.length];
+    const t = typeNames[i % typeNames.length];
+    const suffix = String(16 + i).padStart(12, "0");
+    const id = `e1000000-0000-4000-8000-${suffix}`;
+    const daysAgo = 20 + (i % 60);
+    rows.push({
+      id,
+      client_id: c.id,
+      service_type_id: typeMap[t] ?? null,
+      staff_id: userId ?? null,
+      service_date: new Date(Date.now() - 86400000 * daysAgo).toISOString(),
+      duration_minutes: 30 + (i % 5) * 5,
+      notes: notesTemplate[i % notesTemplate.length],
+      ai_summary: null,
+      ai_action_items: [],
+      ai_mood_risk: null,
+      source: "manual",
+      audio_transcript: null,
+    });
+  }
+
+  const { error: insErr } = await supabase.from("service_entries").insert(rows);
+  if (insErr) {
+    return NextResponse.json({ error: insErr.message }, { status: 500 });
   }
 
   return NextResponse.json({
-    message: "Seed complete",
+    message: "Seed complete (10 clients, 33+ service entries)",
+    counts: { clients: demoClients.length, service_entries: rows.length },
     credentials: { email: "test@victory.app", password: "Test1234!" },
   });
 }

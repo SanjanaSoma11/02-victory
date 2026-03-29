@@ -21,12 +21,14 @@ export async function AppShell({ children }: { children: ReactNode }) {
     }
   }
 
+  const isAdmin = !supabase || profile?.role === "admin";
+
   return (
-    <div className="flex min-h-screen bg-background">
-      <AppSidebar profile={profile} />
-      <div className="flex min-h-screen min-w-0 flex-1 flex-col">
-        <AppMobileNav />
-        {children}
+    <div className="flex min-h-screen items-stretch bg-background">
+      <AppSidebar profile={profile} isAdmin={isAdmin} />
+      <div className="flex min-h-screen min-w-0 flex-1 flex-col bg-background">
+        <AppMobileNav isAdmin={isAdmin} />
+        <div className="flex min-h-0 flex-1 flex-col bg-background">{children}</div>
       </div>
     </div>
   );

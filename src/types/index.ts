@@ -34,6 +34,8 @@ export interface ServiceEntry {
   staff_id: string | null;
   service_date: string;
   duration_minutes: number | null;
+  /** Admin-defined custom fields (JSON), when column exists */
+  custom_fields?: Record<string, unknown> | null;
   notes: string | null;
   ai_summary: string | null;
   ai_action_items: string[];
@@ -60,6 +62,16 @@ export interface ReportSection {
 export interface FunderReport {
   title: string;
   sections: ReportSection[];
+}
+
+export interface Appointment {
+  id: string;
+  client_id: string;
+  staff_id: string | null;
+  title: string | null;
+  starts_at: string;
+  ends_at: string | null;
+  notes: string | null;
 }
 
 export interface GeneratedReport {

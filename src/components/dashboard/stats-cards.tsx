@@ -12,10 +12,14 @@ import {
   YAxis,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, ClipboardList, Clock, TrendingUp } from "lucide-react";
+import { Users, CalendarDays, CalendarRange, CalendarClock, ClipboardList } from "lucide-react";
 
 interface StatsCardsProps {
-  totalClients?: number;
+  activeClients?: number;
+  totalRegistered?: number;
+  servicesWeek?: number;
+  servicesMonth?: number;
+  servicesQuarter?: number;
   totalEntries?: number;
   totalHours?: number;
   weeklyTrend?: { w: string; visits: number }[];
@@ -23,7 +27,11 @@ interface StatsCardsProps {
 }
 
 export function StatsCards({
-  totalClients = 0,
+  activeClients = 0,
+  totalRegistered = 0,
+  servicesWeek = 0,
+  servicesMonth = 0,
+  servicesQuarter = 0,
   totalEntries = 0,
   totalHours = 0,
   weeklyTrend = [],
@@ -32,27 +40,27 @@ export function StatsCards({
   const stats = [
     {
       label: "Active clients",
-      value: String(totalClients),
-      hint: "Total registered",
+      value: String(activeClients),
+      hint: "With a visit in the last 90 days",
       icon: Users,
     },
     {
-      label: "Visits logged",
-      value: String(totalEntries),
-      hint: "All time",
-      icon: ClipboardList,
+      label: "Services this week",
+      value: String(servicesWeek),
+      hint: "Sun–today (calendar week)",
+      icon: CalendarDays,
     },
     {
-      label: "Hours documented",
-      value: String(totalHours),
-      hint: "Last 6 weeks",
-      icon: Clock,
+      label: "Services this month",
+      value: String(servicesMonth),
+      hint: "Month to date",
+      icon: CalendarRange,
     },
     {
-      label: "Service types",
-      value: String(servicesByType.length),
-      hint: "Active categories",
-      icon: TrendingUp,
+      label: "Services this quarter",
+      value: String(servicesQuarter),
+      hint: "Quarter to date",
+      icon: CalendarClock,
     },
   ];
 
@@ -75,16 +83,35 @@ export function StatsCards({
         ))}
       </div>
 
+      <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+        <span className="inline-flex items-center gap-1.5">
+          <ClipboardList className="size-3.5 opacity-70" aria-hidden />
+          Registered clients: <span className="font-medium text-foreground">{totalRegistered}</span>
+        </span>
+        <span className="text-border">·</span>
+        <span>
+          Total visit records:{" "}
+          <span className="font-medium text-foreground">{totalEntries}</span>
+        </span>
+        <span className="text-border">·</span>
+        <span>
+          Hours documented (all time):{" "}
+          <span className="font-medium text-foreground">{totalHours}</span>
+        </span>
+      </p>
+
       <div className="grid gap-6 lg:grid-cols-5">
         <Card className="lg:col-span-3">
           <CardHeader>
             <CardTitle className="font-heading text-lg">Visit volume</CardTitle>
-            <p className="text-sm text-muted-foreground">Weekly service entries — last 6 weeks</p>
+            <p className="text-sm text-muted-foreground">
+              Count of service entries per rolling week — last {weeklyTrend.length || 6} weeks
+            </p>
           </CardHeader>
           <CardContent className="h-72 pt-0">
             {weeklyTrend.length === 0 ? (
               <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-                No entries in the last 6 weeks
+                No entries in the chart window
               </div>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
@@ -96,7 +123,7 @@ export function StatsCards({
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                  <XAxis dataKey="w" tick={{ fontSize: 12 }} stroke="var(--muted-foreground)" />
+                  <XAxis dataKey="w" tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
                   <YAxis allowDecimals={false} tick={{ fontSize: 12 }} stroke="var(--muted-foreground)" />
                   <Tooltip
                     contentStyle={{
@@ -108,6 +135,7 @@ export function StatsCards({
                   <Area
                     type="monotone"
                     dataKey="visits"
+                    name="Visits"
                     stroke="var(--color-chart-1)"
                     strokeWidth={2}
                     fill="url(#fillVisits)"
@@ -121,12 +149,12 @@ export function StatsCards({
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle className="font-heading text-lg">By service type</CardTitle>
-            <p className="text-sm text-muted-foreground">Last 6 weeks</p>
+            <p className="text-sm text-muted-foreground">Share of visits in the last 6 rolling weeks</p>
           </CardHeader>
           <CardContent className="h-72 pt-0">
             {servicesByType.length === 0 ? (
               <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-                No data yet
+                No data in this window
               </div>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
@@ -136,8 +164,8 @@ export function StatsCards({
                   <YAxis
                     dataKey="name"
                     type="category"
-                    width={72}
-                    tick={{ fontSize: 12 }}
+                    width={88}
+                    tick={{ fontSize: 11 }}
                     stroke="var(--muted-foreground)"
                   />
                   <Tooltip
@@ -147,7 +175,7 @@ export function StatsCards({
                       background: "var(--card)",
                     }}
                   />
-                  <Bar dataKey="n" radius={[0, 6, 6, 0]} fill="var(--color-chart-2)" />
+                  <Bar dataKey="n" name="Visits" radius={[0, 6, 6, 0]} fill="var(--color-chart-2)" />
                 </BarChart>
               </ResponsiveContainer>
             )}

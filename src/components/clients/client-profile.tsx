@@ -1,10 +1,12 @@
 import Link from "next/link";
-import { Calendar, Mail, MapPin, Phone, Mic } from "lucide-react";
+import { Calendar, Mail, MapPin, Phone, Mic, Fingerprint } from "lucide-react";
+import { ClientIdCopy } from "@/components/clients/client-id-copy";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { ServiceHistory } from "@/components/services/service-history";
+import { ClientSummaryPanel } from "@/components/clients/client-summary-panel";
 import type { Client } from "@/types";
 import { buttonVariants } from "@/lib/button-variants";
 import { cn } from "@/lib/utils";
@@ -13,18 +15,31 @@ interface ClientProfileProps {
   client: Client;
 }
 
+function formatDemoKey(key: string) {
+  return key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 export function ClientProfile({ client }: ClientProfileProps) {
-  const demo = client.demographics as Record<string, string>;
+  const demo = (client.demographics ?? {}) as Record<string, unknown>;
 
   return (
     <div className="space-y-6">
       <Card className="overflow-hidden border-primary/15 bg-gradient-to-br from-card via-card to-primary/5">
         <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div>
+          <div className="min-w-0 flex-1 space-y-3">
             <p className="text-sm font-medium text-primary">Client record</p>
             <CardTitle className="mt-1 font-heading text-3xl tracking-tight">
               {client.first_name} {client.last_name}
             </CardTitle>
+            <div className="flex items-start gap-2 rounded-lg border border-border/80 bg-background/60 p-3">
+              <Fingerprint className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
+              <div className="min-w-0 space-y-1">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Unique client ID
+                </p>
+                <ClientIdCopy id={client.id} />
+              </div>
+            </div>
             <div className="mt-3 flex flex-wrap gap-2">
               <Badge variant="secondary">Active</Badge>
               {client.date_of_birth ? (
@@ -72,8 +87,9 @@ export function ClientProfile({ client }: ClientProfileProps) {
       </Card>
 
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList>
+        <TabsList className="flex-wrap gap-1">
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="summary">Client summary</TabsTrigger>
           <TabsTrigger value="services">Service history</TabsTrigger>
         </TabsList>
         <TabsContent value="overview" className="mt-4 space-y-4">
@@ -90,7 +106,7 @@ export function ClientProfile({ client }: ClientProfileProps) {
                   {Object.entries(demo).map(([k, v]) => (
                     <div key={k} className="rounded-lg bg-muted/50 px-3 py-2">
                       <dt className="text-xs uppercase tracking-wide text-muted-foreground">
-                        {k}
+                        {formatDemoKey(k)}
                       </dt>
                       <dd className="text-sm font-medium">{String(v)}</dd>
                     </div>
@@ -103,6 +119,9 @@ export function ClientProfile({ client }: ClientProfileProps) {
               </p>
             </CardContent>
           </Card>
+        </TabsContent>
+        <TabsContent value="summary" className="mt-4">
+          <ClientSummaryPanel clientId={client.id} />
         </TabsContent>
         <TabsContent value="services" className="mt-4">
           <ServiceHistory clientId={client.id} />

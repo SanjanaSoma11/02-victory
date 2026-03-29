@@ -126,3 +126,61 @@ Rules:
 
   return JSON.parse(completion.choices[0].message.content ?? "{}") as FunderReportShape;
 }
+
+export interface ClientSummaryShape {
+  sections: { title: string; content: string }[];
+}
+
+export type ClientSummaryInput = {
+  client_label: string;
+  demographics: Record<string, unknown>;
+  visits: {
+    date: string;
+    type: string | null;
+    notes: string | null;
+    summary: string | null;
+  }[];
+};
+
+export async function generateClientSummary(input: ClientSummaryInput): Promise<ClientSummaryShape> {
+  const groq = getGroq();
+  if (!groq) {
+    throw new Error("GROQ_NOT_CONFIGURED");
+  }
+
+  const completion = await groq.chat.completions.create({
+    model: "llama-3.3-70b-versatile",
+    messages: [
+      {
+        role: "system",
+        content: `You are a nonprofit case management assistant. Write an internal handoff-style client summary for staff.
+
+Respond ONLY with valid JSON:
+{
+  "sections": [
+    { "title": "Background", "content": "..." },
+    { "title": "Services to date", "content": "..." },
+    { "title": "Current status", "content": "..." },
+    { "title": "Active needs & referrals", "content": "..." },
+    { "title": "Risk factors", "content": "..." },
+    { "title": "Recommended next steps", "content": "..." }
+  ]
+}
+
+Rules:
+- Ground every claim in the JSON data provided. Do not fabricate facts.
+- If data is sparse, say so briefly instead of inventing detail.
+- Neutral, professional tone; avoid clinical diagnosis unless explicitly in notes.`,
+      },
+      {
+        role: "user",
+        content: `Client summary request:\n${JSON.stringify(input, null, 2)}`,
+      },
+    ],
+    response_format: { type: "json_object" },
+    temperature: 0.35,
+    max_tokens: 3072,
+  });
+
+  return JSON.parse(completion.choices[0].message.content ?? "{}") as ClientSummaryShape;
+}

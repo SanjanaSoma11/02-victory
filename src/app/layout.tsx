@@ -24,7 +24,18 @@ export const metadata: Metadata = {
     template: "%s · Victory",
   },
   description:
-    "Case management for nonprofits: clients, voice notes, and funder-ready reports — built on Next.js, Supabase, and Groq.",
+    "Human-first case management for nonprofits: voice-to-notes, grant-ready dashboards, CSV migration, and draft documentation — Next.js, Supabase, Groq.",
+  openGraph: {
+    title: "Victory — Case notes that keep up with reality",
+    description:
+      "Nonprofit client records, voice structuring, reporting, and admin controls — built for real teams and deployments.",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Victory — Client Case Management",
+    description: "Voice notes, dashboards, CSV, audit — nonprofit case workspace.",
+  },
 };
 
 export default function RootLayout({

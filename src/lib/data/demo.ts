@@ -358,6 +358,39 @@ export const demoServiceEntries: ServiceEntry[] = [
   },
 ];
 
+export const demoAppointments = [
+  {
+    id: "b0000000-0000-4000-8000-0000000000a1",
+    client_id: DEMO_CLIENT_IDS.maria,
+    staff_id: null,
+    title: "Housing paperwork review",
+    starts_at: new Date(Date.now() + 2 * 3600000).toISOString(),
+    ends_at: new Date(Date.now() + 3 * 3600000).toISOString(),
+    notes: "Bring income verification",
+    client: { first_name: "Maria", last_name: "Santos" },
+  },
+  {
+    id: "b0000000-0000-4000-8000-0000000000a2",
+    client_id: DEMO_CLIENT_IDS.james,
+    staff_id: null,
+    title: "Interview prep",
+    starts_at: new Date(Date.now() + 26 * 3600000).toISOString(),
+    ends_at: new Date(Date.now() + 27 * 3600000).toISOString(),
+    notes: null,
+    client: { first_name: "James", last_name: "Okonkwo" },
+  },
+  {
+    id: "b0000000-0000-4000-8000-0000000000a3",
+    client_id: DEMO_CLIENT_IDS.fatima,
+    staff_id: null,
+    title: "Benefits check-in",
+    starts_at: new Date(Date.now() + 50 * 3600000).toISOString(),
+    ends_at: new Date(Date.now() + 51 * 3600000).toISOString(),
+    notes: null,
+    client: { first_name: "Fatima", last_name: "Hassan" },
+  },
+];
+
 export function getClientById(id: string): Client | undefined {
   return demoClients.find((c) => c.id === id);
 }

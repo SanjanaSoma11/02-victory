@@ -54,7 +54,7 @@ const FALLBACK_REPORT = {
     {
       title: "Looking Ahead",
       content:
-        "Upcoming priorities include expanding partner referrals and documenting follow-up tasks from voice-assisted case notes.",
+        "Upcoming priorities include expanding partner referrals and documenting follow-up tasks from recorded case notes.",
     },
   ],
 };

@@ -13,7 +13,11 @@ const StatsCards = dynamic(
 );
 
 interface StatsCardsLoaderProps {
-  totalClients?: number;
+  activeClients?: number;
+  totalRegistered?: number;
+  servicesWeek?: number;
+  servicesMonth?: number;
+  servicesQuarter?: number;
   totalEntries?: number;
   totalHours?: number;
   weeklyTrend?: { w: string; visits: number }[];

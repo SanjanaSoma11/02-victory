@@ -53,8 +53,8 @@ export function ReportGenerator() {
         <CardHeader>
           <CardTitle className="font-heading text-xl">Funder-ready narrative</CardTitle>
           <CardDescription>
-            Aggregates Supabase service data for the period, then uses Groq Llama (with Gemini
-            fallback) to draft sections you can edit.
+            Aggregates service data for the period, then drafts narrative sections you can edit before export or
+            filing.
           </CardDescription>
         </CardHeader>
         <CardContent>
