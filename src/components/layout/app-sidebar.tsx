@@ -22,6 +22,7 @@ import { createClient } from "@/lib/supabase/client";
 interface AppSidebarProps {
   profile: { full_name: string; email: string; role: string } | null;
   isAdmin?: boolean;
+  isStaffOrAdmin?: boolean;
 }
 
 const nav = [
@@ -31,12 +32,13 @@ const nav = [
   { href: "/reports", label: "Reports", icon: FileBarChart },
 ];
 
+// Visible to admins only
 const adminNav = [
   { href: "/admin/audit", label: "Audit log", icon: ScrollText },
-  { href: "/admin/fields", label: "Custom fields", icon: SlidersHorizontal },
+  { href: "/fields", label: "Custom fields", icon: SlidersHorizontal },
 ];
 
-export function AppSidebar({ profile, isAdmin }: AppSidebarProps) {
+export function AppSidebar({ profile, isAdmin, isStaffOrAdmin }: AppSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
 

@@ -47,6 +47,7 @@ export function ServiceForm({ clientId, clientLabel, serviceTypes = [] }: Servic
   const [actionItems, setActionItems] = useState<string[]>([]);
   const [duration, setDuration] = useState("");
   const [serviceDate, setServiceDate] = useState("");
+  const [followUpDate, setFollowUpDate] = useState<string | null>(null);
   const [transcript, setTranscript] = useState<string | null>(null);
 
   useEffect(() => {
@@ -61,6 +62,8 @@ export function ServiceForm({ clientId, clientLabel, serviceTypes = [] }: Servic
     if (data.summary) setNotes((prev) => prev || data.summary);
     setAiMood(data.mood_risk);
     setActionItems(data.action_items);
+    if (data.follow_up_date) setFollowUpDate(data.follow_up_date);
+
     if (data.service_type && !serviceType) {
       const match = serviceTypes.find(
         (t) => t.toLowerCase() === data.service_type.toLowerCase()
@@ -109,8 +112,14 @@ export function ServiceForm({ clientId, clientLabel, serviceTypes = [] }: Servic
 
     if (res.ok) {
       toast.success("Service entry saved.");
-      router.push(`/clients/${clientId}`);
       router.refresh();
+      if (followUpDate) {
+        toast.info("Follow-up detected. Redirecting to calendar.");
+        const titleParam = encodeURIComponent(`Follow-up: ${clientLabel}`);
+        router.push(`/calendar?client_id=${clientId}&starts_at=${followUpDate}&title=${titleParam}`);
+      } else {
+        router.push(`/clients/${clientId}`);
+      }
     } else {
       const data = await res.json().catch(() => ({}));
       toast.error((data as { error?: string }).error ?? "Failed to save entry.");

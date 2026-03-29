@@ -40,7 +40,7 @@ export default async function DashboardPage() {
             Generated from live metrics. Use your browser print dialog to save as PDF.
           </p>
         </div>
-        <div className="px-6 py-4">
+        <div className="px-6 py-4 print-order-last">
           <UpcomingReminders items={reminders} />
         </div>
         <DashboardShell initialStats={stats} />

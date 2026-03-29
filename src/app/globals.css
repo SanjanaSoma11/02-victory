@@ -188,6 +188,12 @@
   }
   .dashboard-print-area {
     padding: 0 !important;
+    display: flex;
+    flex-direction: column;
+  }
+  /* Push the reminders section to the very bottom of the PDF */
+  .print-order-last {
+    order: 99;
   }
   body {
     background: white !important;

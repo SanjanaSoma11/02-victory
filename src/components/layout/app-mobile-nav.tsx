@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, FileBarChart, Sparkles, CalendarDays, ScrollText } from "lucide-react";
+import { LayoutDashboard, Users, FileBarChart, Sparkles, CalendarDays, ScrollText, SlidersHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const nav = [
@@ -12,9 +12,12 @@ const nav = [
   { href: "/reports", label: "Reports", icon: FileBarChart },
 ];
 
-const adminNav = [{ href: "/admin/audit", label: "Admin", icon: ScrollText }];
+const adminNav = [
+  { href: "/admin/audit", label: "Admin", icon: ScrollText },
+  { href: "/fields", label: "Fields", icon: SlidersHorizontal },
+];
 
-export function AppMobileNav({ isAdmin }: { isAdmin?: boolean }) {
+export function AppMobileNav({ isAdmin, isStaffOrAdmin }: { isAdmin?: boolean; isStaffOrAdmin?: boolean }) {
   const pathname = usePathname();
 
   return (
