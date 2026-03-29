@@ -123,7 +123,7 @@ export function ServiceForm({ clientId, clientLabel, serviceTypes = [] }: Servic
             <div className="space-y-2">
               <Label>Service type</Label>
               <Select
-                value={serviceType || undefined}
+                value={serviceType}
                 onValueChange={(v) => setServiceType(v ?? "")}
               >
                 <SelectTrigger className="w-full">

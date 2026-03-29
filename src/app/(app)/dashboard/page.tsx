@@ -25,6 +25,8 @@ export default async function DashboardPage() {
           totalClients={stats.totalClients}
           totalEntries={stats.totalEntries}
           totalHours={stats.totalHours}
+          weeklyTrend={stats.weeklyTrend}
+          servicesByType={stats.servicesByType}
         />
       </div>
     </>

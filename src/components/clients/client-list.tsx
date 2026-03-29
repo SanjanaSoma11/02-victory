@@ -12,12 +12,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { Client } from "@/types";
+import { Badge } from "@/components/ui/badge";
+import type { ClientWithLastService } from "@/lib/data/queries";
 import { buttonVariants } from "@/lib/button-variants";
 import { cn } from "@/lib/utils";
 
 interface ClientListProps {
-  clients: Client[];
+  clients: ClientWithLastService[];
 }
 
 export function ClientList({ clients }: ClientListProps) {
@@ -60,6 +61,7 @@ export function ClientList({ clients }: ClientListProps) {
             <TableRow>
               <TableHead>Name</TableHead>
               <TableHead className="hidden md:table-cell">Contact</TableHead>
+              <TableHead className="hidden lg:table-cell">Last service</TableHead>
               <TableHead className="hidden lg:table-cell">Address</TableHead>
               <TableHead className="w-[100px] text-right">Profile</TableHead>
             </TableRow>
@@ -82,6 +84,13 @@ export function ClientList({ clients }: ClientListProps) {
                     <span>{c.phone ?? "—"}</span>
                     <span className="text-muted-foreground">{c.email ?? "—"}</span>
                   </div>
+                </TableCell>
+                <TableCell className="hidden lg:table-cell">
+                  {c.last_service_type ? (
+                    <Badge variant="secondary">{c.last_service_type}</Badge>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">—</span>
+                  )}
                 </TableCell>
                 <TableCell className="hidden max-w-[220px] truncate text-muted-foreground lg:table-cell">
                   {c.address ?? "—"}

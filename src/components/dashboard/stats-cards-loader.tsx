@@ -16,18 +16,10 @@ interface StatsCardsLoaderProps {
   totalClients?: number;
   totalEntries?: number;
   totalHours?: number;
+  weeklyTrend?: { w: string; visits: number }[];
+  servicesByType?: { name: string; n: number }[];
 }
 
-export function StatsCardsLoader({
-  totalClients,
-  totalEntries,
-  totalHours,
-}: StatsCardsLoaderProps) {
-  return (
-    <StatsCards
-      totalClients={totalClients}
-      totalEntries={totalEntries}
-      totalHours={totalHours}
-    />
-  );
+export function StatsCardsLoader(props: StatsCardsLoaderProps) {
+  return <StatsCards {...props} />;
 }
