@@ -105,13 +105,18 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ ok: true });
   }
 
-  const { error } = await supabase
+  const { error, data } = await supabase
     .from("service_types")
     .update({ is_active: parsed.data.is_active })
-    .eq("id", parsed.data.id);
+    .eq("id", parsed.data.id)
+    .select("id");
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  if (!data || data.length === 0) {
+    return NextResponse.json({ error: "Permission denied or resource not found." }, { status: 403 });
   }
 
   await logAudit(supabase, {
